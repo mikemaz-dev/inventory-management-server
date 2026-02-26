@@ -1,0 +1,11 @@
+model InventoryTag {
+  id          String @id @default(uuid())
+  inventoryId String @map("inventory_id")
+  tagId       String @map("tag_id")
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id])
+  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([inventoryId, tagId])
+  @@map("inventory_tags")
+}
