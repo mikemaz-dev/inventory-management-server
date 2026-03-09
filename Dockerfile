@@ -2,7 +2,7 @@ FROM oven/bun:1.2-debian
 
 WORKDIR /app
 
-COPY bun.lockb package.json ./
+COPY bun.lock package.json ./
 RUN bun install
 
 COPY . .
