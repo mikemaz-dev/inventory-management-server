@@ -1,4 +1,3 @@
-# ✅ Bun 1.2+ с Node.js 22+
 FROM oven/bun:1.2-debian
 
 WORKDIR /app
