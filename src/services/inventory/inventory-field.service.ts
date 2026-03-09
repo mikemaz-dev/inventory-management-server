@@ -8,8 +8,19 @@ import { getAccessibleInventory } from '@/utils/inventory/getAccessibleInventory
 import { prisma } from '@/utils/prisma.js'
 
 export class InventoryFieldService {
-	async getList(userId: string) {
+	async getList(userId: string | null, inventoryId: string) {
+		const inventory = await prisma.inventory.findUnique({
+			where: { id: inventoryId },
+		})
+
+		if (!inventory) throw new NotFoundException()
+
+		if (!inventory.isPublic && inventory.ownerId !== userId) {
+			throw new ForbiddenException()
+		}
+
 		return prisma.inventoryField.findMany({
+			where: { inventoryId },
 			orderBy: { order: 'asc' },
 		})
 	}
@@ -39,6 +50,13 @@ export class InventoryFieldService {
 	async create(userId: string, dto: TCreateInventoryFieldDto) {
 		await getAccessibleInventory(userId, dto.inventoryId)
 
+		const lastField = await prisma.inventoryField.findFirst({
+			where: { inventoryId: dto.inventoryId },
+			orderBy: { order: 'desc' },
+		})
+
+		const nextOrder = lastField ? lastField.order + 1 : 1
+
 		return prisma.inventoryField.create({
 			data: {
 				inventoryId: dto.inventoryId,
@@ -46,7 +64,7 @@ export class InventoryFieldService {
 				title: dto.title,
 				description: dto.description || '',
 				showInTable: dto.showInTable ?? false,
-				order: dto.order ?? 1,
+				order: nextOrder,
 			},
 		})
 	}
@@ -69,11 +87,11 @@ export class InventoryFieldService {
 		return prisma.inventoryField.update({
 			where: { id: fieldId },
 			data: {
-				title: dto.title,
-				description: dto.description,
-				type: dto.type,
-				showInTable: dto.showInTable,
-				order: dto.order,
+				...(dto.title && { title: dto.title }),
+				...(dto.description && { description: dto.description }),
+				...(dto.type && { type: dto.type }),
+				...(dto.showInTable !== undefined && { showInTable: dto.showInTable }),
+				...(dto.order && { order: dto.order }),
 			},
 		})
 	}
@@ -83,6 +101,8 @@ export class InventoryFieldService {
 			where: { id: fieldId },
 			include: { inventory: true },
 		})
+
+		await getAccessibleInventory(userId, field?.inventoryId as string)
 
 		if (!field) throw new NotFoundException()
 		if (field.inventory.ownerId !== userId) throw new ForbiddenException()

@@ -10,13 +10,17 @@ const inventoryFieldService = new InventoryFieldService()
 export class InventoryFieldController {
 	async getList(req: Request, res: Response, next: NextFunction) {
 		try {
-			const userId = req.user!.id
+			const userId = req.user?.id ?? null
+			const { inventoryId } = req.query
 
-			const inventoryFields = await inventoryFieldService.getList(userId)
+			if (!inventoryId || typeof inventoryId !== 'string') {
+				return res.status(400).json({ message: 'inventoryId required' })
+			}
 
-			res.status(200).json(inventoryFields)
-		} catch (error) {
-			next(error)
+			const fields = await inventoryFieldService.getList(userId, inventoryId)
+			res.json(fields)
+		} catch (err) {
+			next(err)
 		}
 	}
 

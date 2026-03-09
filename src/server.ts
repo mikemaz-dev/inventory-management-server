@@ -4,10 +4,12 @@ import express, { type Request, type Response } from 'express'
 import cors from 'cors'
 import { authRouter } from './routes/auth.route.js'
 import { userRouter } from './routes/user.route.js'
-import { prisma } from './utils/prisma.js'
 import { inventoryRouter } from './routes/inventory.route.js'
 import { itemRouter } from './routes/item.route.js'
 import { inventoryFieldRouter } from './routes/inventory-field.route.js'
+import { prisma } from './utils/prisma.js'
+import { tagRouter } from './routes/tag.route.js'
+import { inventoryCustomId } from './routes/inventory-custom-id.route.js'
 
 dotenv.config()
 
@@ -28,6 +30,8 @@ app.use('/api/users', userRouter)
 app.use('/api/inventories', inventoryRouter)
 app.use('/api/items', itemRouter)
 app.use('/api/inventory-fields', inventoryFieldRouter)
+app.use('/api/tags', tagRouter)
+app.use('/api/inventories/custom-id', inventoryCustomId)
 
 app.use((_, res) => {
 	res.status(404).json({ message: 'Not found' })

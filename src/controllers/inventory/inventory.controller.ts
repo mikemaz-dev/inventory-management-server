@@ -3,7 +3,7 @@ import {
 	updateInventorySchema,
 } from '@/schemas/inventory.schema.js'
 import { InventoryService } from '@/services/inventory/inventory.service.js'
-import type { Request, Response, NextFunction } from 'express'
+import type { NextFunction, Request, Response } from 'express'
 
 const inventoryService = new InventoryService()
 
@@ -45,6 +45,15 @@ export class InventoryController {
 			await inventoryService.delete(userId, id as string)
 
 			res.status(204).send()
+		} catch (error) {
+			next(error)
+		}
+	}
+
+	getAllWithItems = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const data = await inventoryService.getAllWithItems()
+			res.json(data)
 		} catch (error) {
 			next(error)
 		}

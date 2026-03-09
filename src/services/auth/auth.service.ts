@@ -39,7 +39,9 @@ export class AuthService {
 	}
 
 	static async login(data: Omit<IAuthDto, 'username'>) {
-		const user = await prisma.user.findUnique({ where: { email: data.email } })
+		const user = await prisma.user.findUnique({
+			where: { email: data.email.toLowerCase() },
+		})
 		if (!user) throw new Error('Invalid credentials')
 
 		const valid = await bcrypt.compare(data.password, user.password)

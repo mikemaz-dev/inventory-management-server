@@ -8,6 +8,8 @@ export const createInventorySchema = z.object({
 	imageUrl: z.url().optional(),
 
 	isPublic: z.boolean().optional(),
+
+	tags: z.array(z.string()).optional(),
 })
 
 export const updateInventorySchema = createInventorySchema.partial()

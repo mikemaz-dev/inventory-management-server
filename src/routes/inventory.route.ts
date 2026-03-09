@@ -5,6 +5,11 @@ import { Router } from 'express'
 const router = Router()
 const controller = new InventoryController()
 
+router.get(
+	'/all-with-items',
+	authMiddleware(),
+	controller.getAllWithItems.bind(controller),
+)
 router.get('/', authMiddleware(), controller.getList.bind(controller))
 router.get('/:id', authMiddleware(), controller.getById.bind(controller))
 

@@ -5,6 +5,7 @@ import type {
 import type { Inventory } from '@/generated/prisma/client.js'
 import { ForbiddenException } from '@/utils/exceptions/forbidden.exception.js'
 import { NotFoundException } from '@/utils/exceptions/not-found.exception.js'
+import { getAccessibleInventory } from '@/utils/inventory/getAccessibleInventory.js'
 import { getOwnedInventory } from '@/utils/inventory/getOwnedInventory.js'
 import { prisma } from '@/utils/prisma.js'
 
@@ -58,6 +59,25 @@ export class InventoryService implements IInventoryService {
 		if (inventory.ownerId !== userId) throw new ForbiddenException()
 
 		await prisma.inventory.delete({ where: { id: inventoryId } })
+	}
+
+	async getAllWithItems() {
+		return prisma.inventory.findMany({
+			include: {
+				owner: { select: { id: true, email: true } },
+				items: {
+					include: {
+						createdBy: { select: { id: true, email: true } },
+						itemFieldValues: {
+							include: {
+								field: { select: { id: true, title: true, type: true } },
+							},
+						},
+					},
+				},
+			},
+			orderBy: { createdAt: 'desc' },
+		})
 	}
 
 	async getList(userId: string | null): Promise<Inventory[]> {

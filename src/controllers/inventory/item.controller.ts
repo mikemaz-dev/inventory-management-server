@@ -2,13 +2,13 @@ import { createItemSchema, updateItemSchema } from '@/dto/inventory/item.dto.js'
 import { ItemService } from '@/services/inventory/item.service.js'
 import type { NextFunction, Request, Response } from 'express'
 
-const itemService = new ItemService()
+export const itemService = new ItemService()
 
 export class ItemController {
 	async getList(req: Request, res: Response, next: NextFunction) {
 		try {
 			const userId = req.user!.id
-			const { inventoryId } = req.params
+			const { inventoryId } = req.query as { inventoryId: string }
 
 			const items = await itemService.getList(userId, inventoryId as string)
 
@@ -20,7 +20,7 @@ export class ItemController {
 
 	async getById(req: Request, res: Response, next: NextFunction) {
 		try {
-			const userId = req.user!.id
+			const userId = req.user?.id ?? null
 			const { id } = req.params
 
 			const item = await itemService.getById(userId, id as string)
@@ -68,9 +68,9 @@ export class ItemController {
 	async delete(req: Request, res: Response, next: NextFunction) {
 		try {
 			const userId = req.user!.id
-			const { itemId } = req.params
+			const { id } = req.params
 
-			await itemService.delete(userId, itemId as string)
+			await itemService.delete(userId, id as string)
 
 			res.status(204).send()
 		} catch (error) {

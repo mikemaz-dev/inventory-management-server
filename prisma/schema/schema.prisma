@@ -1,8 +1,201 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
+  output   = "../../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id @default(uuid())
+  email    String  @unique
+  password String
+  username String  @unique
+  avatar   String?
+
+  role      ROLE
+  isBlocked Boolean @map("is_blocked")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  inventories Inventory[]
+  accesses    InventoryAccess[]
+  items       Item[]
+  comments    Comment[]
+
+  @@map("users")
+}
+
+enum ROLE {
+  USER
+  ADMIN
+}
+
+model Inventory {
+  id String @id @default(uuid())
+
+  title       String
+  description String?
+  category    String
+  imageUrl    String? @map("image_url")
+
+  isPublic Boolean @default(false) @map("is_public")
+
+  ownerId String @map("owner_id")
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  accesses InventoryAccess[]
+
+  fields             InventoryField[]    @relation("InventoryFields")
+  customIdFormat     CustomIdFormat?
+  items              Item[]
+  comments           Comment[]
+  inventoryTags      InventoryTag[]
+  inventorySequences InventorySequence[]
+
+  @@map("inventories")
+}
+
+model InventoryField {
+  id          String @id @default(uuid())
+  inventoryId String @map("inventory_id")
+
+  type        FIELD_TYPE
+  title       String
+  description String
+  showInTable Boolean    @map("show_in_table")
+  order       Int
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  inventory       Inventory        @relation("InventoryFields", fields: [inventoryId], references: [id], onDelete: Cascade)
+  itemFieldValues ItemFieldValue[]
+
+  @@map("inventory_fields")
+}
+
+enum FIELD_TYPE {
+  SINGLE_LINE
+  MULTI_LINE
+  NUMBER
+  LINK
+  BOOLEAN
+}
+
+model CustomIdFormat {
+  id          String @id @default(uuid())
+  inventoryId String @unique @map("inventory_id")
+
+  elements Json
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  @@map("custom_id_formats")
+}
+
+model Item {
+  id          String @id @default(uuid())
+  inventoryId String @map("inventory_id")
+  customId    String @map("custom_id")
+  createdById String @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  inventory       Inventory        @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  createdBy       User             @relation(fields: [createdById], references: [id])
+  itemFieldValues ItemFieldValue[]
+
+  @@unique([inventoryId, customId])
+  @@map("items")
+}
+
+model ItemFieldValue {
+  id      String @id @default(uuid())
+  itemId  String @map("item_id")
+  fieldId String @map("field_id")
+
+  valueString  String?
+  valueNumber  Float?
+  valueBoolean Boolean?
+
+  item  Item           @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  field InventoryField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, fieldId])
+  @@map("item_field_values")
+}
+
+model Comment {
+  id          String @id @default(uuid())
+  inventoryId String @map("inventory_id")
+  userId      String @map("user_id")
+
+  content String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@map("comments")
+}
+
+model Tag {
+  id   String @id @default(uuid())
+  name String @unique
+
+  inventories InventoryTag[]
+
+  @@map("tags")
+}
+
+model InventoryTag {
+  id          String @id @default(uuid())
+  inventoryId String @map("inventory_id")
+  tagId       String @map("tag_id")
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id])
+  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([inventoryId, tagId])
+  @@map("inventory_tags")
+}
+
+model InventoryAccess {
+  id          String @id @default(uuid())
+  inventoryId String
+  userId      String @map("user_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@unique([inventoryId, userId])
+  @@map("inventory_access")
+}
+
+model InventorySequence {
+  inventoryId String @id @map("inventory_id")
+  value       Int    @default(0)
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("inventory_sequences")
 }

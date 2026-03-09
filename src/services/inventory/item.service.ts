@@ -2,11 +2,15 @@ import type {
 	TCreateItemDto,
 	TUpdateItemDto,
 } from '@/dto/inventory/item.dto.js'
-import { FIELD_TYPE } from '@/generated/prisma/enums.js'
+import { FIELD_TYPE } from '@/generated/prisma/client.js'
 import { ForbiddenException } from '@/utils/exceptions/forbidden.exception.js'
 import { NotFoundException } from '@/utils/exceptions/not-found.exception.js'
 import { getAccessibleInventory } from '@/utils/inventory/getAccessibleInventory.js'
 import { prisma } from '@/utils/prisma.js'
+import { CustomIdService } from './custom-id.service.js'
+import { Prisma } from '@prisma/client'
+
+const MAX_RETRIES = 5
 
 export class ItemService {
 	async getList(userId: string, inventoryId: string) {
@@ -78,46 +82,44 @@ export class ItemService {
 	async create(userId: string, dto: TCreateItemDto) {
 		await getAccessibleInventory(userId, dto.inventoryId)
 
-		const fields = await prisma.inventoryField.findMany({
-			where: { inventoryId: dto.inventoryId },
-		})
+		const customIdService = new CustomIdService()
 
-		const fieldMap = new Map(fields.map(f => [f.id, f]))
+		for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+			try {
+				const customId = await customIdService.generate(dto.inventoryId)
 
-		for (const value of dto.values) {
-			const field = fieldMap.get(value.fieldId)
+				return await prisma.$transaction(async tx => {
+					const item = await tx.item.create({
+						data: {
+							inventoryId: dto.inventoryId,
+							createdById: userId,
+							customId,
+						},
+					})
 
-			if (!field) throw new Error('Field does not belong to inventory')
+					await tx.itemFieldValue.createMany({
+						data: dto.values.map(v => ({
+							itemId: item.id,
+							fieldId: v.fieldId,
+							value: v.value,
+						})),
+					})
 
-			this.validateFieldValue(field.type, value.value)
+					return item
+				})
+			} catch (error) {
+				if (
+					error instanceof Prisma.PrismaClientKnownRequestError &&
+					error.code === 'P2002'
+				) {
+					continue
+				}
+
+				throw error
+			}
 		}
 
-		const lastItem = await prisma.item.findFirst({
-			where: { inventoryId: dto.inventoryId },
-			orderBy: { createdAt: 'desc' },
-		})
-
-		const nextCustomId = lastItem ? String(Number(lastItem.customId) + 1) : '1'
-
-		return prisma.$transaction(async tx => {
-			const item = await tx.item.create({
-				data: {
-					inventoryId: dto.inventoryId,
-					createdById: userId,
-					customId: nextCustomId,
-				},
-			})
-
-			await tx.itemFieldValue.createMany({
-				data: dto.values.map(v => ({
-					itemId: item.id,
-					fieldId: v.fieldId,
-					value: v.value,
-				})),
-			})
-
-			return item
-		})
+		throw new Error('Failed to generate unique Custom ID')
 	}
 
 	async update(
@@ -162,7 +164,7 @@ export class ItemService {
 				data: dto.values.map(v => ({
 					itemId,
 					fieldId: v.fieldId,
-					values: v.value,
+					value: v.value,
 				})),
 			})
 
