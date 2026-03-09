@@ -1,14 +1,14 @@
-FROM oven/bun:1.10.2
+FROM oven/bun:1.1
 
 WORKDIR /app
 
 COPY bun.lockb package.json ./
 
-RUN bun install --production
+RUN bun install
 
 COPY . .
 
-RUN bun prisma generate
+RUN bunx prisma generate
 
 RUN bun run build
 
