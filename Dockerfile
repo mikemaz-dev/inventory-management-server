@@ -1,17 +1,17 @@
-FROM node:20-bullseye-slim
+FROM oven/bun:1.10.2
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY bun.lockb package.json ./
 
-RUN npm ci --only=production
+RUN bun install --production
 
 COPY . .
 
-RUN npx prisma generate
+RUN bun prisma generate
 
-RUN npm run build
+RUN bun run build
 
 EXPOSE 3000
 
-CMD ["node", "dist/server.js"]
+CMD ["bun", "run", "start"]
