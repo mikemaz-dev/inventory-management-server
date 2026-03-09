@@ -9,6 +9,7 @@ import { getAccessibleInventory } from '@/utils/inventory/getAccessibleInventory
 import { prisma } from '@/utils/prisma.js'
 import { CustomIdService } from './custom-id.service.js'
 import { Prisma } from '@prisma/client'
+import { PrismaClientKnownRequestError } from '@/generated/prisma/runtime/client.js'
 
 const MAX_RETRIES = 5
 
@@ -107,10 +108,21 @@ export class ItemService {
 
 					return item
 				})
-			} catch (error) {
+			} catch (error: unknown) {
+				if (error instanceof PrismaClientKnownRequestError) {
+					if (error.code === 'P2002') {
+						continue
+					}
+					if (error.code === 'P2025') {
+						throw new NotFoundException()
+					}
+				}
+
 				if (
-					error instanceof Prisma.PrismaClientKnownRequestError &&
-					error.code === 'P2002'
+					typeof error === 'object' &&
+					error !== null &&
+					'code' in error &&
+					(error as { code: string }).code === 'P2002'
 				) {
 					continue
 				}
