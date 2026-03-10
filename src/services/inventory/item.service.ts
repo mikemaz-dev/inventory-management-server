@@ -2,13 +2,13 @@ import type {
 	TCreateItemDto,
 	TUpdateItemDto,
 } from '@/dto/inventory/item.dto.js'
-import { PrismaClientKnownRequestError } from '@/generated/prisma/runtime/client.js'
 import { ForbiddenException } from '@/utils/exceptions/forbidden.exception.js'
 import { NotFoundException } from '@/utils/exceptions/not-found.exception.js'
 import { getAccessibleInventory } from '@/utils/inventory/getAccessibleInventory.js'
 import { prisma } from '@/utils/prisma.js'
 import { CustomIdService } from './custom-id.service.js'
 import { FIELD_TYPE } from '@prisma/client'
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client'
 
 const MAX_RETRIES = 5
 
@@ -108,14 +108,22 @@ export class ItemService {
 					return item
 				})
 			} catch (error: unknown) {
-				if (error instanceof PrismaClientKnownRequestError) {
-					if (error.code === 'P2002') {
-						continue
-					}
-					if (error.code === 'P2025') {
-						throw new NotFoundException()
-					}
+				const errorCode =
+					typeof error === 'object' &&
+					error !== null &&
+					'code' in error &&
+					typeof (error as { code: unknown }).code === 'string'
+						? (error as { code: string }).code
+						: null
+
+				if (errorCode === 'P2002') {
+					continue
 				}
+
+				if (errorCode === 'P2025') {
+					throw new NotFoundException()
+				}
+
 				throw error
 			}
 		}

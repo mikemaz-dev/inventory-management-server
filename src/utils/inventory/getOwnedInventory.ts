@@ -1,7 +1,7 @@
-import type { Inventory } from '@/generated/prisma/client.js'
 import { prisma } from '../prisma.js'
 import { NotFoundException } from '../exceptions/not-found.exception.js'
 import { ForbiddenException } from '../exceptions/forbidden.exception.js'
+import type { Inventory } from '@prisma/client'
 
 export async function getOwnedInventory(
 	userId: string,
