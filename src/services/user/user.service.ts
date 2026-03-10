@@ -1,5 +1,5 @@
-import type { ROLE } from '@/generated/prisma/client.js'
 import { prisma } from '@/utils/prisma.js'
+import type { ROLE } from '@prisma/client'
 
 export class UserService {
 	static async getById(id: string) {

@@ -1,5 +1,5 @@
-import type { Tag } from '@/generated/prisma/index.js'
 import { prisma } from '@/utils/prisma.js'
+import type { Tag } from '@prisma/client'
 
 export class TagService {
 	async search(query: string): Promise<Tag[]> {

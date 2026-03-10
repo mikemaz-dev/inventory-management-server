@@ -1,6 +1,6 @@
-import type { ROLE } from '@/generated/prisma/client.js'
 import { verifyAccessToken } from '@/utils/jwt.js'
 import { prisma } from '@/utils/prisma.js'
+import type { ROLE } from '@prisma/client'
 import { type NextFunction, type Request, type Response } from 'express'
 
 declare global {

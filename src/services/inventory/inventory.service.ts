@@ -2,12 +2,11 @@ import type {
 	TCreateInventoryDto,
 	TUpdateInventoryDto,
 } from '@/dto/inventory/inventory.dto.js'
-import type { Inventory } from '@/generated/prisma/client.js'
 import { ForbiddenException } from '@/utils/exceptions/forbidden.exception.js'
 import { NotFoundException } from '@/utils/exceptions/not-found.exception.js'
-import { getAccessibleInventory } from '@/utils/inventory/getAccessibleInventory.js'
 import { getOwnedInventory } from '@/utils/inventory/getOwnedInventory.js'
 import { prisma } from '@/utils/prisma.js'
+import type { Inventory, InventoryAccess } from '@prisma/client'
 
 interface IInventoryService {
 	create(userId: string, dto: TCreateInventoryDto): Promise<Inventory>
@@ -130,6 +129,8 @@ export class InventoryService implements IInventoryService {
 		if (!userId) return false
 		if (inventory.ownerId === userId) return true
 
-		return inventory.accesses.some(a => a.userId === userId)
+		return inventory.accesses.some(
+			(a: { userId: string }) => a.userId === userId,
+		)
 	}
 }
