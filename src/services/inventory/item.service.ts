@@ -3,13 +3,12 @@ import type {
 	TUpdateItemDto,
 } from '@/dto/inventory/item.dto.js'
 import { FIELD_TYPE } from '@/generated/prisma/client.js'
+import { PrismaClientKnownRequestError } from '@/generated/prisma/runtime/client.js'
 import { ForbiddenException } from '@/utils/exceptions/forbidden.exception.js'
 import { NotFoundException } from '@/utils/exceptions/not-found.exception.js'
 import { getAccessibleInventory } from '@/utils/inventory/getAccessibleInventory.js'
 import { prisma } from '@/utils/prisma.js'
 import { CustomIdService } from './custom-id.service.js'
-import { Prisma } from '@prisma/client'
-import { PrismaClientKnownRequestError } from '@/generated/prisma/runtime/client.js'
 
 const MAX_RETRIES = 5
 

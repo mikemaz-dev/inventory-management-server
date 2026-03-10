@@ -2,6 +2,8 @@ FROM oven/bun:1.2-debian
 
 WORKDIR /app
 
+RUN apt-get update -y && apt-get install -y openssl
+
 COPY bun.lock package.json ./
 RUN bun install
 
