@@ -112,7 +112,7 @@ model Item {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   inventory       Inventory        @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-  createdBy       User             @relation(fields: [createdById], references: [id])
+  createdBy       User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
   itemFieldValues ItemFieldValue[]
 
   @@unique([inventoryId, customId])
@@ -146,7 +146,7 @@ model Comment {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("comments")
 }
@@ -181,7 +181,7 @@ model InventoryAccess {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   inventory Inventory @relation(fields: [inventoryId], references: [id])
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([inventoryId, userId])
   @@map("inventory_access")
