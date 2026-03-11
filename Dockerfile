@@ -5,13 +5,13 @@ WORKDIR /app
 RUN apt-get update -y && apt-get install -y openssl
 
 COPY bun.lock package.json ./
-RUN bun install --frozen-lockfile
-
-COPY prisma ./prisma
-RUN bunx prisma generate
+RUN bun install
 
 COPY . .
 
+ENV DATABASE_URL="postgresql://placeholder:5432/placeholder"
+
+RUN bunx prisma generate
 RUN bun run build
 
 EXPOSE 3000
