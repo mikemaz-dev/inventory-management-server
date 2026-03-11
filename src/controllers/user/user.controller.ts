@@ -1,5 +1,5 @@
-import { ROLE } from '@/generated/prisma/client.js'
 import { UserService } from '@/services/user/user.service.js'
+import { ROLE } from '@prisma/client'
 import { type Request, type Response } from 'express'
 
 export class UserController {
