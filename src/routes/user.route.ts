@@ -23,5 +23,10 @@ router.patch(
 	authMiddleware('ADMIN'),
 	controller.changeRole.bind(controller),
 )
+router.delete(
+	'/:id',
+	authMiddleware('ADMIN'),
+	controller.deleteUser.bind(controller),
+)
 
-export const 	userRouter = router
+export const userRouter = router

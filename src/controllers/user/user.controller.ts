@@ -1,5 +1,5 @@
+import { ROLE } from '@/generated/prisma/client.js'
 import { UserService } from '@/services/user/user.service.js'
-import { ROLE } from '@prisma/client'
 import { type Request, type Response } from 'express'
 
 export class UserController {
@@ -83,6 +83,30 @@ export class UserController {
 			return res.status(400).json({
 				success: false,
 				message: error.message,
+			})
+		}
+	}
+
+	async deleteUser(req: Request, res: Response) {
+		try {
+			const { id } = req.params
+			const currentUserId = req.user!.id
+
+			const result = await UserService.deleteUser(id as string)
+
+			const isSelfDelete = currentUserId === id
+
+			return res.json({
+				success: true,
+				data: result,
+				selfDeleted: isSelfDelete,
+			})
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Unknown error'
+
+			return res.status(400).json({
+				success: false,
+				message,
 			})
 		}
 	}

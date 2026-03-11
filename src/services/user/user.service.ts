@@ -80,4 +80,29 @@ export class UserService {
 			},
 		})
 	}
+
+	static async deleteUser(id: string) {
+		const user = await prisma.user.findUnique({
+			where: { id },
+			select: { id: true, role: true },
+		})
+
+		if (!user) throw new Error('User not found')
+
+		if (user.role === 'ADMIN') {
+			const adminsCount = await prisma.user.count({
+				where: { role: 'ADMIN' },
+			})
+
+			if (adminsCount <= 1) {
+				throw new Error('Cannot delete the last admin')
+			}
+		}
+
+		await prisma.user.delete({
+			where: { id },
+		})
+
+		return { deletedId: id }
+	}
 }
