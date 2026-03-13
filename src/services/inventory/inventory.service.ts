@@ -98,6 +98,9 @@ export class InventoryService implements IInventoryService {
 					},
 				],
 			},
+			include: {
+				owner: true,
+			},
 		})
 	}
 
