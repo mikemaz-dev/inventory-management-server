@@ -1,0 +1,8 @@
+export { authRouter } from './auth.route.js'
+export { integrationsRouter } from './integrations.route.js'
+export { inventoryCustomIdRouter } from './inventory-custom-id.route.js'
+export { inventoryRouter } from './inventory.route.js'
+export { inventoryFieldRouter } from './inventory-field.route.js'
+export { itemRouter } from './item.route.js'
+export { tagRouter } from './tag.route.js'
+export { userRouter } from './user.route.js'

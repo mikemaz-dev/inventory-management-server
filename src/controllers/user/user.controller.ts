@@ -36,7 +36,7 @@ export class UserController {
 		}
 	}
 
-	async getAllUsers(req: Request, res: Response) {
+	async getAllUsers(res: Response) {
 		try {
 			const users = await UserService.getAll()
 			return res.json({ success: true, data: users })

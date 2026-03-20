@@ -1,15 +1,21 @@
 import cookieParser from 'cookie-parser'
-import * as dotenv from 'dotenv'
-import express, { type Request, type Response } from 'express'
 import cors from 'cors'
-import { authRouter } from './routes/auth.route.js'
-import { userRouter } from './routes/user.route.js'
-import { inventoryRouter } from './routes/inventory.route.js'
-import { itemRouter } from './routes/item.route.js'
-import { inventoryFieldRouter } from './routes/inventory-field.route.js'
+import * as dotenv from 'dotenv'
+
+import express, { type Response } from 'express'
+
+import {
+	authRouter,
+	integrationsRouter,
+	inventoryCustomIdRouter,
+	inventoryFieldRouter,
+	inventoryRouter,
+	itemRouter,
+	tagRouter,
+	userRouter,
+} from './routes/index.js'
+
 import { prisma } from './utils/prisma.js'
-import { tagRouter } from './routes/tag.route.js'
-import { inventoryCustomId } from './routes/inventory-custom-id.route.js'
 
 dotenv.config()
 
@@ -31,13 +37,14 @@ app.use('/api/inventories', inventoryRouter)
 app.use('/api/items', itemRouter)
 app.use('/api/inventory-fields', inventoryFieldRouter)
 app.use('/api/tags', tagRouter)
-app.use('/api/inventories/custom-id', inventoryCustomId)
+app.use('/api/inventories/custom-id', inventoryCustomIdRouter)
+app.use('/api/integrations', integrationsRouter)
 
 app.use((_, res) => {
 	res.status(404).json({ message: 'Not found' })
 })
 
-app.use((err: any, req: Request, res: Response, next: any) => {
+app.use((err: any, res: Response) => {
 	console.error(err)
 
 	res.status(err.status || 500).json({

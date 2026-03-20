@@ -50,7 +50,7 @@ export class InventoryController {
 		}
 	}
 
-	getAllWithItems = async (req: Request, res: Response, next: NextFunction) => {
+	getAllWithItems = async (res: Response, next: NextFunction) => {
 		try {
 			const data = await inventoryService.getAllWithItems()
 			res.json(data)

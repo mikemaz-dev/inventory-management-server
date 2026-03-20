@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 const BaseElementSchema = z.object({
 	id: z.string(),
-	type: z.nativeEnum(IdElementTypeEnum),
+	type: z.enum(IdElementTypeEnum),
 })
 
 const FixedTextSchema = BaseElementSchema.extend({

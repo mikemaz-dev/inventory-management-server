@@ -6,9 +6,8 @@ import { ForbiddenException } from '@/utils/exceptions/forbidden.exception.js'
 import { NotFoundException } from '@/utils/exceptions/not-found.exception.js'
 import { getAccessibleInventory } from '@/utils/inventory/getAccessibleInventory.js'
 import { prisma } from '@/utils/prisma.js'
-import { CustomIdService } from './custom-id.service.js'
 import { FIELD_TYPE } from '@prisma/client'
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client'
+import { CustomIdService } from './custom-id.service.js'
 
 const MAX_RETRIES = 5
 
