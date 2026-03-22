@@ -6,7 +6,7 @@ const router = Router()
 
 router.post(
 	'/salesforce/user',
-	authMiddleware('USER'),
+	authMiddleware(),
 	salesForceController.createIntegration.bind(salesForceController),
 )
 export const integrationsRouter = router
