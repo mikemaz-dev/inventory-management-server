@@ -31,29 +31,22 @@ export class SalesForceController {
 				data: { account, contact },
 			})
 		} catch (error: any) {
-			console.error('SalesForceController error:', {
+			console.error('SF Error Full:', {
 				message: error.message,
-				stack: error.stack,
-				sfResponse: error.response?.data,
+				response: error.response?.data,
+				status: error.response?.status,
+				config: {
+					url: error.config?.url,
+					method: error.config?.method,
+					hasPassword: !!error.config?.data?.includes('password'),
+				},
 			})
-
-			if (error.message?.includes('INVALID_FIELD')) {
-				return res.status(400).json({ message: 'Invalid field in request' })
-			}
-			if (error.message?.includes('INSUFFICIENT_ACCESS')) {
-				return res
-					.status(403)
-					.json({ message: 'Insufficient permissions in Salesforce' })
-			}
-			if (error.message?.includes('auth') || error.message?.includes('token')) {
-				return res
-					.status(503)
-					.json({ message: 'Salesforce authentication failed' })
-			}
 
 			return res.status(500).json({
 				message: error.message,
-				details: error.response?.data || 'No details',
+				sfError: error.response?.data || 'No SF response',
+				sfStatus: error.response?.status,
+				hint: 'Check Render env vars: SF_USERNAME, SF_PASSWORD (pass+token), grant_type=password',
 			})
 		}
 	}
