@@ -31,7 +31,11 @@ export class SalesForceController {
 				data: { account, contact },
 			})
 		} catch (error: any) {
-			console.error('❌ SalesForceController error:', error.message)
+			console.error('SalesForceController error:', {
+				message: error.message,
+				stack: error.stack,
+				sfResponse: error.response?.data,
+			})
 
 			if (error.message?.includes('INVALID_FIELD')) {
 				return res.status(400).json({ message: 'Invalid field in request' })
@@ -48,7 +52,8 @@ export class SalesForceController {
 			}
 
 			return res.status(500).json({
-				message: error.message || 'Salesforce integration error',
+				message: error.message,
+				details: error.response?.data || 'No details',
 			})
 		}
 	}
