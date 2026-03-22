@@ -32,6 +32,17 @@ export class SalesforceService {
 		params.append('username', process.env.SF_USERNAME!)
 		params.append('password', process.env.SF_PASSWORD!)
 
+		console.log('SF Auth Request Debug:', {
+			tokenUrl: this.tokenUrl,
+			clientIdSet: !!this.clientId,
+			clientSecretSet: !!this.clientSecret,
+			usernameSet: !!process.env.SF_USERNAME,
+			passwordSet: !!process.env.SF_PASSWORD,
+			grantType: 'password',
+			usernamePreview: process.env.SF_USERNAME?.slice(0, 10) + '...',
+			passwordLength: process.env.SF_PASSWORD?.length || 0,
+		})
+
 		try {
 			const res = await axios.post<ISalesforceAuthResponse>(
 				this.tokenUrl,
