@@ -26,9 +26,11 @@ export class SalesforceService {
 
 	private async doAuthenticate(): Promise<void> {
 		const params = new URLSearchParams()
-		params.append('grant_type', 'client_credentials')
+		params.append('grant_type', 'password')
 		params.append('client_id', this.clientId)
 		params.append('client_secret', this.clientSecret)
+		params.append('username', process.env.SF_USERNAME!)
+		params.append('password', process.env.SF_PASSWORD!)
 
 		try {
 			const res = await axios.post<ISalesforceAuthResponse>(
@@ -49,7 +51,7 @@ export class SalesforceService {
 			})
 		} catch (error: any) {
 			const err = error as AxiosError
-			console.error('Salesforce auth failed:', {
+			console.error('❌ Salesforce auth failed:', {
 				status: err.response?.status,
 				data: err.response?.data,
 				message: err.message,
