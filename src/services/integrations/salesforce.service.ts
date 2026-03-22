@@ -62,14 +62,25 @@ export class SalesforceService {
 			})
 		} catch (error: any) {
 			const err = error as AxiosError
-			console.error('❌ Salesforce auth failed:', {
+
+			console.error('Salesforce auth failed:', {
 				status: err.response?.status,
+				statusText: err.response?.statusText,
 				data: err.response?.data,
+				headers: err.response?.headers,
 				message: err.message,
+				code: err.code,
 			})
+
+			console.error('Request details:', {
+				tokenUrl: this.tokenUrl,
+				clientId: this.clientId?.slice(0, 20) + '...',
+				hasUsername: !!process.env.SF_USERNAME,
+				hasPassword: !!process.env.SF_PASSWORD,
+				passwordLength: process.env.SF_PASSWORD?.length,
+			})
+
 			throw new Error(`Salesforce auth error: ${err.message}`)
-		} finally {
-			this.authPromise = null
 		}
 	}
 
