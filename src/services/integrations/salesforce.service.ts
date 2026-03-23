@@ -1,95 +1,90 @@
+import axios, { AxiosError } from 'axios'
 import type {
 	IAccountData,
 	IContactData,
 	ISalesforceAuthResponse,
 	ISalesforceError,
 } from '@/types/salesforce.types.js'
-import axios, { AxiosError } from 'axios'
 
 export class SalesforceService {
 	private clientId = process.env.SF_CLIENT_ID!
 	private clientSecret = process.env.SF_CLIENT_SECRET!
-	private tokenUrl = process.env.SF_TOKEN_URL!
+	private redirectUri = process.env.SF_REDIRECT_URI!
+	private authUrl = 'https://login.salesforce.com/services/oauth2/authorize'
+	private tokenUrl = 'https://login.salesforce.com/services/oauth2/token'
 
 	private accessToken: string | null = null
+	private refreshToken: string | null = null
 	private instanceUrl: string | null = null
-	private authPromise: Promise<void> | null = null
 
-	private async authenticate(): Promise<void> {
-		if (this.accessToken && this.instanceUrl) return
-
-		if (this.authPromise) return this.authPromise
-
-		this.authPromise = this.doAuthenticate()
-		return this.authPromise
+	getAuthUrl(): string {
+		const params = new URLSearchParams({
+			response_type: 'code',
+			client_id: this.clientId,
+			redirect_uri: this.redirectUri,
+			scope: 'refresh_token full api',
+		})
+		return `${this.authUrl}?${params.toString()}`
 	}
 
-	private async doAuthenticate(): Promise<void> {
-		const params = new URLSearchParams()
-		params.append('grant_type', 'password')
-		params.append('client_id', this.clientId)
-		params.append('client_secret', this.clientSecret)
-		params.append('username', process.env.SF_USERNAME!)
-		params.append('password', process.env.SF_PASSWORD!)
-
-		console.log('SF Auth Request Debug:', {
-			tokenUrl: this.tokenUrl,
-			clientIdSet: !!this.clientId,
-			clientSecretSet: !!this.clientSecret,
-			usernameSet: !!process.env.SF_USERNAME,
-			passwordSet: !!process.env.SF_PASSWORD,
-			grantType: 'password',
-			usernamePreview: process.env.SF_USERNAME?.slice(0, 10) + '...',
-			passwordLength: process.env.SF_PASSWORD?.length || 0,
+	/** Обмен code на access_token */
+	async handleOAuthCallback(code: string): Promise<void> {
+		const params = new URLSearchParams({
+			grant_type: 'authorization_code',
+			code,
+			client_id: this.clientId,
+			client_secret: this.clientSecret,
+			redirect_uri: this.redirectUri,
 		})
 
-		try {
-			const res = await axios.post<ISalesforceAuthResponse>(
-				this.tokenUrl,
-				params,
-				{
-					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-					timeout: 10_000,
-				},
-			)
+		const res = await axios.post<ISalesforceAuthResponse>(
+			this.tokenUrl,
+			params,
+			{
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				timeout: 10_000,
+			},
+		)
 
-			this.accessToken = res.data.access_token
-			this.instanceUrl = res.data.instance_url?.replace(/\/$/, '')
+		this.accessToken = res.data.access_token
+		this.refreshToken = res.data.refresh_token
+		this.instanceUrl = res.data.instance_url?.replace(/\/$/, '')
 
-			console.log('Salesforce authenticated:', {
-				instanceUrl: this.instanceUrl,
-				tokenPreview: this.accessToken?.slice(0, 20) + '...',
-			})
-		} catch (error: any) {
-			const err = error as AxiosError
+		console.log('Salesforce OAuth success:', {
+			instanceUrl: this.instanceUrl,
+			tokenPreview: this.accessToken?.slice(0, 20) + '...',
+		})
+	}
 
-			console.error('Salesforce auth failed:', {
-				status: err.response?.status,
-				statusText: err.response?.statusText,
-				data: err.response?.data,
-				headers: err.response?.headers,
-				message: err.message,
-				code: err.code,
-			})
+	async refreshAccessToken(): Promise<void> {
+		if (!this.refreshToken) throw new Error('No refresh token')
 
-			console.error('Request details:', {
-				tokenUrl: this.tokenUrl,
-				clientId: this.clientId?.slice(0, 20) + '...',
-				hasUsername: !!process.env.SF_USERNAME,
-				hasPassword: !!process.env.SF_PASSWORD,
-				passwordLength: process.env.SF_PASSWORD?.length,
-			})
+		const params = new URLSearchParams({
+			grant_type: 'refresh_token',
+			refresh_token: this.refreshToken,
+			client_id: this.clientId,
+			client_secret: this.clientSecret,
+		})
 
-			throw new Error(`Salesforce auth error: ${err.message}`)
-		}
+		const res = await axios.post<ISalesforceAuthResponse>(
+			this.tokenUrl,
+			params,
+			{
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				timeout: 10_000,
+			},
+		)
+
+		this.accessToken = res.data.access_token
+		this.instanceUrl = res.data.instance_url?.replace(/\/$/, '')
 	}
 
 	private async request<T>(
-		method: 'post' | 'get' | 'patch',
+		method: 'get' | 'post' | 'patch',
 		endpoint: string,
 		data?: any,
 	): Promise<T> {
-		await this.authenticate()
+		if (!this.accessToken) await this.refreshAccessToken()
 
 		try {
 			const res = await axios[method]<T>(
@@ -109,12 +104,6 @@ export class SalesforceService {
 			const sfErrors = Array.isArray(err.response?.data)
 				? (err.response.data as ISalesforceError[])
 				: [err.response?.data as ISalesforceError].filter(Boolean)
-
-			console.error('❌ Salesforce API error:', {
-				endpoint,
-				status: err.response?.status,
-				errors: sfErrors,
-			})
 
 			const message =
 				sfErrors.map(e => e.message || e.errorCode).join(', ') ||
@@ -137,18 +126,6 @@ export class SalesforceService {
 			'/services/data/v57.0/sobjects/Contact',
 			data,
 		)
-	}
-	async healthCheck(): Promise<{ ok: boolean; version?: string }> {
-		try {
-			await this.authenticate()
-			const data = await this.request<{ latestVersion: string }>(
-				'get',
-				'/services/data',
-			)
-			return { ok: true, version: data.latestVersion }
-		} catch {
-			return { ok: false }
-		}
 	}
 }
 
