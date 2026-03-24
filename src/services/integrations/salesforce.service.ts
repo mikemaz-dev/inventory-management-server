@@ -52,7 +52,7 @@ export class SalesforceService {
 		)
 
 		this.accessToken = res.data.access_token
-		this.refreshToken = res.data.refresh_token
+		this.refreshToken = res.data.refresh_token ?? null
 		this.instanceUrl = res.data.instance_url?.replace(/\/$/, '')
 
 		console.log('Salesforce OAuth success:', {
