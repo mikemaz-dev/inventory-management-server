@@ -10,8 +10,8 @@ export class SalesforceService {
 	private clientId = process.env.SF_CLIENT_ID!
 	private clientSecret = process.env.SF_CLIENT_SECRET!
 	private redirectUri = process.env.SF_REDIRECT_URI!
-	private authUrl = 'https://login.salesforce.com/services/oauth2/authorize'
-	private tokenUrl = 'https://login.salesforce.com/services/oauth2/token'
+	private authUrl = 'https://test.salesforce.com/services/oauth2/authorize'
+	private tokenUrl = 'https://test.salesforce.com/services/oauth2/token'
 
 	private accessToken: string | null = null
 	private refreshToken: string | null = null
@@ -27,8 +27,13 @@ export class SalesforceService {
 		return `${this.authUrl}?${params.toString()}`
 	}
 
-	/** Обмен code на access_token */
 	async handleOAuthCallback(code: string): Promise<void> {
+		console.log({
+			tokenUrl: this.tokenUrl,
+			username: process.env.SF_USERNAME,
+			passwordLength: process.env.SF_PASSWORD?.length,
+		})
+
 		const params = new URLSearchParams({
 			grant_type: 'authorization_code',
 			code,
